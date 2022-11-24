@@ -10,6 +10,7 @@ import java.net.Socket;
 
 public class Client implements Runnable {
     private Socket socket;
+    private int count = 0;
     public Client(String host, int adress) {
         try {
             this.socket = new Socket(host, adress);
@@ -23,19 +24,23 @@ public class Client implements Runnable {
     @Override    
     public void run() {
         try {
-            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
             BufferedReader b = new BufferedReader(new InputStreamReader(System.in));
-            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-            System.out.print("Enter your name: ");
-            String name = b.readLine();
-            dataOutputStream.writeUTF(name);
-            dataOutputStream.flush();
+            if (count == 0) {
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                System.out.print("Enter your name: ");
+                String name = b.readLine();
+                dataOutputStream.writeUTF(name);
+                dataOutputStream.flush();
+                count++;
+            }
             while (true) {
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
                 String req = dataInputStream.readUTF();
                 System.out.println("Server> " + req);
                 String console = dataInputStream.readUTF();
                 System.out.println(console);
-                System.out.println("Client> ");
+                System.out.print("Client> ");
                 String toSend = b.readLine();
                 if (toSend.toLowerCase().equals("fin") || toSend.toLowerCase().equals("quit") || toSend.toLowerCase().equals("exit")) {
                     System.out.println("Server> " + dataInputStream.readUTF());

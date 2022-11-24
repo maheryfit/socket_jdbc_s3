@@ -33,10 +33,7 @@ public class Server implements Runnable {
             try {
                 socket = this.serverSocket.accept();
                 System.out.println("A new client is connected");
-                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-                ClientHandler clientHandler = new ClientHandler(socket, dataInputStream, dataOutputStream, objectOutputStream);
+                ClientHandler clientHandler = new ClientHandler(socket);
                 System.out.println("Assigning a new thread to this client...");
                 Thread thread = new Thread(clientHandler);
                 thread.start();        
@@ -49,17 +46,14 @@ public class Server implements Runnable {
     }
 
     class ClientHandler implements Runnable {
+        Socket socket;
         DataOutputStream outputStream;
         DataInputStream inputStream;
         ObjectOutputStream objectOutputStream;
-        Socket socket;
         private int count = 0;
 
-        public ClientHandler(Socket socket, DataInputStream inputStream, DataOutputStream outputStream, ObjectOutputStream objectOutputStream) {
+        public ClientHandler(Socket socket) {
             this.socket = socket;
-            this.inputStream = inputStream;
-            this.outputStream = outputStream;
-            this.objectOutputStream = objectOutputStream;
         }        
         
         @Override 
@@ -67,6 +61,7 @@ public class Server implements Runnable {
             String receive = "";
             String name = "";
             try {
+                inputStream = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
                 name = inputStream.readUTF();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -76,12 +71,12 @@ public class Server implements Runnable {
             System.out.println("User(Socket :"+ this.socket +")'s name : " + name);
             while (true) {
                 try {
-                    outputStream.writeUTF("ENTER THE REQUEST : ");
-                    outputStream.flush();
-                    outputStream.writeUTF("JAVASQL>");
-                    outputStream.flush();
+                    outputStream = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
+                    inputStream = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
                     receive = inputStream.readUTF();
+                    System.out.println(receive);
                     if (receive.toLowerCase().equals("fin") || receive.toLowerCase().equals("quit") || receive.toLowerCase().equals("exit")) {
+                        outputStream = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
                         String message = "";
                         if (count <= 1) 
                             message = "Today " + LocalDate.now() + ", you executed " + count + " request";   
@@ -94,6 +89,11 @@ public class Server implements Runnable {
                         this.socket.close();
                         break;         
                     } else {
+                        outputStream = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
+                        outputStream.writeUTF("ENTER THE REQUEST : ");
+                        outputStream.flush();
+                        outputStream.writeUTF("JAVASQL>");
+                        outputStream.flush();
                         outputStream.writeUTF(receive);
                         outputStream.flush();
                         count++;
