@@ -5,10 +5,13 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDate;
+import java.util.LinkedList;
 import java.io.DataOutputStream;
 import java.io.DataInputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+
+import mg.base.SQL;
 
 public class Server implements Runnable {
 
@@ -31,12 +34,16 @@ public class Server implements Runnable {
             System.out.println("Wait for request...");
             Socket socket = null;
             try {
-                socket = this.serverSocket.accept();
+                socket = this.serverSocket.accept();  
                 System.out.println("A new client is connected");
-                ClientHandler clientHandler = new ClientHandler(socket);
+                DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+                DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+                SQL sql = new SQL();
+                ClientHandler clientHandler = new ClientHandler(socket, dataOutputStream, dataInputStream, objectOutputStream, sql);
                 System.out.println("Assigning a new thread to this client...");
                 Thread thread = new Thread(clientHandler);
-                thread.start();        
+                thread.start();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 System.out.println(e.getLocalizedMessage());
@@ -46,58 +53,72 @@ public class Server implements Runnable {
     }
 
     class ClientHandler implements Runnable {
-        Socket socket;
+        private Socket socket;
         private int count = 0;
+        private String name;
+        private SQL sql;
+        private DataOutputStream outputStream;
+        private DataInputStream inputStream;
+        private ObjectOutputStream objectOutputStream;
 
-        public ClientHandler(Socket socket) {
+        public ClientHandler(Socket socket, DataOutputStream outputStream, DataInputStream inputStream, ObjectOutputStream objectOutputStream, SQL sql) {
             this.socket = socket;
+            this.outputStream = outputStream;
+            this.inputStream = inputStream;
+            this.objectOutputStream = objectOutputStream;
+            this.sql = sql;
         }        
         
         @Override 
         public void run() {
+            LinkedList<String> dataFetch = null;
+            String message = null;
+            String rowFetch = null;
             String receive = "";
-            String name = "";
             try {
-                DataInputStream inputStream = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
                 name = inputStream.readUTF();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 System.out.println(e.getLocalizedMessage());
                 System.out.println(e.getCause());
             }
+            boolean first = true;
             System.out.println("User(Socket :"+ this.socket +")'s name : " + name);
             while (true) {
                 try {
-                    DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
-                    DataInputStream inputStream = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
-                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
-                    outputStream.writeUTF("ENTER THE REQUEST : ");
-                    outputStream.flush();
-                    outputStream.writeUTF("JAVASQL>");
-                    outputStream.flush();
+                    if (first) {
+                        outputStream.writeUTF("ENTER THE REQUEST : \nJAVASQL> ");
+                        outputStream.flush();
+                        first = false;   
+                    }
                     receive = inputStream.readUTF();
-                    System.out.println(receive);
+                    System.out.println(name + ">" + receive);
+                    sql.doRequest(receive, dataFetch, message, rowFetch);
+                    if (dataFetch == null) {
+                        outputStream.writeUTF("message");
+                        outputStream.flush();
+                        objectOutputStream.writeObject(message); 
+                        objectOutputStream.flush();
+                    }
+                    else {
+                        outputStream.writeUTF("table");
+                        outputStream.flush();
+                        objectOutputStream.writeObject(dataFetch);
+                        objectOutputStream.flush();
+                        objectOutputStream.writeObject(rowFetch);
+                        objectOutputStream.flush();
+                    }
                     if (receive.toLowerCase().equals("fin") || receive.toLowerCase().equals("quit") || receive.toLowerCase().equals("exit")) {
-                        String message = "";
+                        String toSend = "";
                         if (count <= 1) 
-                            message = "Today " + LocalDate.now() + ", you executed " + count + " request";   
+                            toSend = "Today " + LocalDate.now() + ", you executed " + count + " request";   
                         else 
-                            message = "Today " + LocalDate.now() + ", you executed " + count + " requests";          
-                        outputStream.writeUTF(message);
+                            toSend = "Today " + LocalDate.now() + ", you executed " + count + " requests";          
+                        outputStream.writeUTF(toSend + "\nHAVE A NICE DAY :D");
                         outputStream.flush();
-                        outputStream.writeUTF("HAVE A NICE DAY :D");
-                        outputStream.flush();
-                        this.socket.close();
-                        outputStream.close();
-                        inputStream.close();
-                        objectOutputStream.close();
                         break;         
                     } else {
-                        outputStream.writeUTF("ENTER THE REQUEST : ");
-                        outputStream.flush();
-                        outputStream.writeUTF("JAVASQL>");
-                        outputStream.flush();
-                        outputStream.writeUTF(receive);
+                        outputStream.writeUTF("ENTER THE REQUEST : \nJAVASQL> ");
                         outputStream.flush();
                         count++;
                     }
@@ -107,6 +128,15 @@ public class Server implements Runnable {
                     System.out.println(e.getCause());
                 }
             }
+            try {
+                this.outputStream.close();
+                this.inputStream.close();
+                this.socket.close();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                System.out.println(e.getLocalizedMessage());
+                System.out.println(e.getCause());
+            } 
         }
     }
 }

@@ -84,9 +84,9 @@ public class SQL {
         return getFileTable().contains(nom);
     }
     
-    public void doRequest(String request) throws Exception {
+    public void doRequest(String request, LinkedList<String> datasFetch, String message, String rowFetch) throws Exception {
         if (request.equals("SHOW TABLE")) {
-            displayResult(getFileTable());
+            displayResult(getFileTable(), datasFetch, rowFetch);
         } else if(request.contains((CharSequence)"DELETE FROM")) {
             String name;
             if (!request.contains((CharSequence)"WHERE")) {
@@ -96,10 +96,10 @@ public class SQL {
                 name = getNomTable(request, "WHERE", "FROM", 1).trim();
             }
             if (!isTableExist(name)) {
-                System.out.println("ERROR: YOU TRIED TO DELETE IN A TABLE WHO DOESN'T EXIST");
+                message = "ERROR: YOU TRIED TO DELETE IN A TABLE WHO DOESN'T EXIST";
             } else {
                 Table table = new Table(request);
-                System.out.println("Data deleted");
+                message = "Data deleted";
             }
         }
         else if (request.contains((CharSequence)"CREATE TABLE") && request.contains((CharSequence)"AND COLUMNS ARE")) {
@@ -107,21 +107,21 @@ public class SQL {
             if (!isTableExist(name)) {
                 insertToFileTable(request);
                 Table table = new Table(request);
-                System.out.println("TABLE CREATED");
+                message = "TABLE CREATED";
             } else {
-                System.out.println("ERROR: THE TABLE ALREADY EXISTED");
+                message = "ERROR: THE TABLE ALREADY EXISTED";
             }
         } else if(request.contains((CharSequence)"INSERT INTO") && request.contains((CharSequence)"VALUES")) {
             String name = getNomTable(request, "VALUES", "INSERT INTO");
             if (isTableExist(name)) {
                 try {
                     Table table = new Table(request);
-                    System.out.println("Data add");
+                    message = "Data add";
                 } catch (Exception e) {
-                    System.out.println(e.getMessage() + ", "+ e.getCause().toString());
+                    message = e.getMessage() + ", "+ e.getCause().toString();
                 }
             } else {
-                System.out.println("ERROR: YOU TRIED TO INSERT DATA IN A TABLE WHO DOESN'T EXIST");
+                message = "ERROR: YOU TRIED TO INSERT DATA IN A TABLE WHO DOESN'T EXIST";
             }
         } else if(request.contains((CharSequence)"SELECT") && request.contains((CharSequence)"FROM") && !request.contains((CharSequence)"UNION") && !request.contains((CharSequence)"INTERSECT") && !request.contains((CharSequence)"NOT IN") && !request.contains((CharSequence)"DIVIDE BY") && !request.contains((CharSequence)"PRODUCT WITH") && !request.contains((CharSequence)"JOIN")) {
             String name;
@@ -136,61 +136,61 @@ public class SQL {
                 Table table = new Table(request);
                 LinkedList<String> tableaux = table.getDatasFetch();
                 if (tableaux == null) {
-                    System.out.println("ERROR: INVALID COLUMN");
+                    message = "ERROR: INVALID COLUMN";
                 } else {
                     if (tableaux.isEmpty()) 
-                        System.out.println("NO DATA SELECTED");
+                        message = "NO DATA SELECTED";
                     else 
-                        displayResult(tableaux); 
+                        displayResult(tableaux, datasFetch, rowFetch); 
                 }
             } else {
-                System.out.println("ERROR: YOU TRIED TO SELECT DATA IN A TABLE WHO DOESN'T EXIST");
+                message = "ERROR: YOU TRIED TO SELECT DATA IN A TABLE WHO DOESN'T EXIST";
             }
         } else if(request.contains((CharSequence)"SELECT") && request.contains((CharSequence)"FROM") || request.contains((CharSequence)"UNION") || request.contains((CharSequence)"INTERSECT") || request.contains((CharSequence)"NOT IN") || request.contains((CharSequence)"DIVIDE BY") || request.contains((CharSequence)"PRODUCT WITH") || request.contains((CharSequence)"JOIN")) {
             String nameTab1 = "";
             String nameTab2 = "";
             if (request.contains("UNION") || request.contains("INTERSECT") || request.contains("NOT IN")) {
                 if (request.contains("UNION")) 
-                    onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "UNION");
+                    onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "UNION", datasFetch, rowFetch, message);
                 else if (request.contains("INTERSECT")) 
-                    onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "INTERSECT");
+                    onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "INTERSECT", datasFetch, rowFetch, message);
                 else 
-                    onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "NOT IN");
+                    onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "NOT IN", datasFetch, rowFetch, message);
             } else if(request.contains("PRODUCT WITH") || request.contains("JOIN") || request.contains("DIVIDE BY")) {
                 if (request.contains("PRODUCT WITH")) 
-                    onlyProjectionJoinDivide(request, nameTab1, nameTab2, "PRODUCT WITH");
+                    onlyProjectionJoinDivide(request, nameTab1, nameTab2, "PRODUCT WITH", datasFetch, rowFetch, message);
                 if (request.contains("ON")) {
                     if(request.contains("JOIN"))
-                        onlyProjectionJoinDivide(request, nameTab1, nameTab2, "JOIN");
+                        onlyProjectionJoinDivide(request, nameTab1, nameTab2, "JOIN", datasFetch, rowFetch, message);
                     else 
-                        onlyProjectionJoinDivide(request, nameTab1, nameTab2, "DIVIDE BY");
+                        onlyProjectionJoinDivide(request, nameTab1, nameTab2, "DIVIDE BY", datasFetch, rowFetch, message);
                 }
                 else 
-                    System.out.println("ERROR: INVALID COMMAND");
+                    message = "ERROR: INVALID COMMAND";
             }
         }
         else {
-            System.out.println("ERROR: PLEASE REVIRIFY YOUR ORDER");
+            message = "ERROR: PLEASE REVIRIFY YOUR ORDER";
         }
     }
     
-    private void onlyUnionDifferenceIntersect(String request, String nameTab1, String nameTab2, String splitter) throws Exception {
+    private void onlyUnionDifferenceIntersect(String request, String nameTab1, String nameTab2, String splitter, LinkedList<String> datasFetch, String rowFetch, String message) throws Exception {
         String[] reqs = request.split(splitter);
         String[] a = getLesNomsDeTable(request, splitter);
         nameTab1 = a[0];
         nameTab2 = a[1];
         if (nameTab1.equals(nameTab2) == false || !isTableExist(nameTab1) || !isTableExist(nameTab2)) {
-            System.out.println("ERROR: PLEASE REVIRIFY THE TABLE");
+            message = "ERROR: PLEASE REVIRIFY THE TABLE";
         } else {
             switch (splitter) {
                 case "UNION":
-                    displayResult(union(reqs[0], reqs[1]), "ERROR: COLUMNS CHOOSE IN BOTH REQUEST MUST BE THE SAME IN UNION");
+                    displayResult(union(reqs[0], reqs[1]), datasFetch, rowFetch, "ERROR: COLUMNS CHOOSE IN BOTH REQUEST MUST BE THE SAME IN UNION", message);
                     break;
                 case "INTERSECT":
-                    displayResult(intersect(reqs[0], reqs[1]), "ERROR: COLUMNS CHOOSE IN BOTH REQUEST MUST BE THE SAME IN INTERSECT");
+                    displayResult(intersect(reqs[0], reqs[1]), datasFetch, rowFetch, "ERROR: COLUMNS CHOOSE IN BOTH REQUEST MUST BE THE SAME IN INTERSECT", message);
                     break;
                 default:
-                    displayResult(difference(reqs[0], reqs[1]), "ERROR: COLUMNS CHOOSE IN BOTH REQUEST MUST BE THE SAME IN DIFFERENCE");
+                    displayResult(difference(reqs[0], reqs[1]), datasFetch, rowFetch, "ERROR: COLUMNS CHOOSE IN BOTH REQUEST MUST BE THE SAME IN DIFFERENCE", message);
                     break;
             }
         }
@@ -217,21 +217,19 @@ public class SQL {
         return aRetourner;
     }
     
-    private void displayResult(LinkedList<String> tableau) {
-        tableau.forEach((action)-> {
-            System.out.println(action);
-        });
+    private void displayResult(LinkedList<String> tableau, LinkedList<String> datasFetch, String rowFetch) {
+        datasFetch = tableau;
         if (tableau.size() <= 1) {
-            System.out.println(tableau.size() + " row selected");
+            rowFetch = tableau.size() + " row selected";
         } else
-            System.out.println(tableau.size() + " rows selected");
+            rowFetch = tableau.size() + " rows selected";
     }
     
-    private void displayResult(LinkedList<String> tableau, String error) {
+    private void displayResult(LinkedList<String> tableau, LinkedList<String> datasFetch, String rowFetch, String error, String message) {
         if (tableau.isEmpty()) {
-            System.out.println(error);
+            message = error;
         } else {
-            displayResult(tableau);
+            displayResult(tableau, datasFetch, rowFetch);
         }
     }
     
@@ -315,7 +313,7 @@ public class SQL {
         return aRetourner;
     }
     
-    private void onlyProjectionJoinDivide(String request, String name1, String name2, String splitter) throws Exception {
+    private void onlyProjectionJoinDivide(String request, String name1, String name2, String splitter, LinkedList<String> datasFetch, String rowFetch, String message) throws Exception {
         String[] reqs = null;
         String[] a = null;
         String[] r = null;
@@ -332,19 +330,19 @@ public class SQL {
             name2 = a[1];
         }
         if (name1.equals(name2) == true || !isTableExist(name1) || !isTableExist(name2)) {
-            System.out.println("ERROR: PLEASE REVIRIFY THE TABLE");
+            message = "ERROR: PLEASE REVIRIFY THE TABLE";
         } else {
             switch (splitter) {
                 case "PRODUCT WITH":
-                    displayResult(produitScalaire(reqs[0], reqs[1]), "NO DATA SELECTED"); /// SELECT * FROM table1 PRODUCT WITH SELECT * FROM table2
+                    displayResult(produitScalaire(reqs[0], reqs[1]), datasFetch, rowFetch, "NO DATA SELECTED", message); /// SELECT * FROM table1 PRODUCT WITH SELECT * FROM table2
                     break;
                     
                 case "JOIN":
-                    displayResult(jointure(reqs[0], reqs[1], r[1].trim()), "NO DATA SELECTED"); /// SELECT * FROM table1 JOIN SELECT * FROM table2 ON column(mitovy)
+                    displayResult(jointure(reqs[0], reqs[1], r[1].trim()), datasFetch, rowFetch, "NO DATA SELECTED", message); /// SELECT * FROM table1 JOIN SELECT * FROM table2 ON column(mitovy)
                     break;
                     
                 default:
-                    displayResult( division(reqs[0], reqs[1], r[1].trim()), "NO DATA SELECTED"); /// SELECT * FROM table1 DIVIDE BY SELECT * FROM table2 ON column(mitovy)
+                    displayResult(division(reqs[0], reqs[1], r[1].trim()), datasFetch, rowFetch, "NO DATA SELECTED", message); /// SELECT * FROM table1 DIVIDE BY SELECT * FROM table2 ON column(mitovy)
                     break;
             }
         }
