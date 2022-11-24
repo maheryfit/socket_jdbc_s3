@@ -37,7 +37,7 @@ public class Client implements Runnable {
                 DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
                 DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
                 String req = dataInputStream.readUTF();
-                System.out.println("Server> " + req);
+                System.out.println(req);
                 String console = dataInputStream.readUTF();
                 System.out.println(console);
                 System.out.print("Client> ");

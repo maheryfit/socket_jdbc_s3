@@ -47,9 +47,6 @@ public class Server implements Runnable {
 
     class ClientHandler implements Runnable {
         Socket socket;
-        DataOutputStream outputStream;
-        DataInputStream inputStream;
-        ObjectOutputStream objectOutputStream;
         private int count = 0;
 
         public ClientHandler(Socket socket) {
@@ -61,7 +58,7 @@ public class Server implements Runnable {
             String receive = "";
             String name = "";
             try {
-                inputStream = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
+                DataInputStream inputStream = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
                 name = inputStream.readUTF();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -71,12 +68,16 @@ public class Server implements Runnable {
             System.out.println("User(Socket :"+ this.socket +")'s name : " + name);
             while (true) {
                 try {
-                    outputStream = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
-                    inputStream = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
+                    DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
+                    DataInputStream inputStream = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
+                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
+                    outputStream.writeUTF("ENTER THE REQUEST : ");
+                    outputStream.flush();
+                    outputStream.writeUTF("JAVASQL>");
+                    outputStream.flush();
                     receive = inputStream.readUTF();
                     System.out.println(receive);
                     if (receive.toLowerCase().equals("fin") || receive.toLowerCase().equals("quit") || receive.toLowerCase().equals("exit")) {
-                        outputStream = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
                         String message = "";
                         if (count <= 1) 
                             message = "Today " + LocalDate.now() + ", you executed " + count + " request";   
@@ -87,9 +88,11 @@ public class Server implements Runnable {
                         outputStream.writeUTF("HAVE A NICE DAY :D");
                         outputStream.flush();
                         this.socket.close();
+                        outputStream.close();
+                        inputStream.close();
+                        objectOutputStream.close();
                         break;         
                     } else {
-                        outputStream = new DataOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
                         outputStream.writeUTF("ENTER THE REQUEST : ");
                         outputStream.flush();
                         outputStream.writeUTF("JAVASQL>");
@@ -103,15 +106,6 @@ public class Server implements Runnable {
                     System.out.println(e.getLocalizedMessage());
                     System.out.println(e.getCause());
                 }
-            }
-            try {
-                this.inputStream.close();
-                this.outputStream.close();
-                this.objectOutputStream.close();    
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-                System.out.println(e.getLocalizedMessage());
-                System.out.println(e.getCause());
             }
         }
     }
