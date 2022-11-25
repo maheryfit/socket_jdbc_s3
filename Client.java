@@ -56,15 +56,16 @@ public class Client implements Runnable {
                     this.dataOutputStream.close();
                     System.out.println("Connection closed");
                     break;
-                // } else {
-                //     if (dataInputStream.readUTF().equals("table")) {
-                //         LinkedList<String> datas = new LinkedList<String>().getClass().cast(objectInputStream.readObject());
-                //         String row = (String) objectInputStream.readObject();
-                //         displayResult(datas, row);
-                //     } else if(dataInputStream.readUTF().equals("message")) {
-                //         String message = objectInputStream.readObject().toString();
-                //         displayMessage(message);
-                //     }
+                } else {
+                    Object object = objectInputStream.readObject();
+                    if (object instanceof LinkedList) {
+                        LinkedList<String> datas = new LinkedList<String>().getClass().cast(object);
+                        int row = datas.size();
+                        displayResult(datas, row);
+                    } else if(object instanceof String) {
+                        String message = object.toString();
+                        displayMessage(message);
+                    }
                 }
             }   
         } catch (Exception e) {
@@ -75,11 +76,12 @@ public class Client implements Runnable {
     }
 
 
-    private void displayResult(LinkedList<String> datas, String row) {
+    private void displayResult(LinkedList<String> datas, int row) {
         datas.forEach(data -> {
             System.out.println(data);
         });
-        System.out.println(row);
+        String rowSelected = row + " selected";
+        System.out.println(rowSelected);
     }
 
     private void displayMessage(String message) {

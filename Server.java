@@ -80,8 +80,6 @@ public class Server implements Runnable {
                 System.out.println(e.getCause());
             }
             LinkedList<String> dataFetch = new LinkedList<>();
-            String message = null;
-            String rowFetch = null;
             boolean first = true; 
             System.out.println("User's name : " + name);
             while (true) {
@@ -104,27 +102,8 @@ public class Server implements Runnable {
                         break;         
                     } else {
                         Object obj = sql.doRequest(receive);
-                        if (obj instanceof String) {
-                            // outputStream.writeUTF("message");
-                            // outputStream.flush();
-                            // objectOutputStream.writeObject(message); 
-                            // objectOutputStream.flush();
-                            message = (String) obj;
-                            System.out.println(message + " >MESSAGE");
-                        }
-                        else if(obj instanceof LinkedList) {
-                            // outputStream.writeUTF("table");
-                            // outputStream.flush();
-                            // objectOutputStream.writeObject(dataFetch);
-                            // objectOutputStream.flush();
-                            // objectOutputStream.writeObject(rowFetch);
-                            // objectOutputStream.flush();
-                            dataFetch = (LinkedList) obj;
-                            dataFetch.forEach(action-> {
-                                System.out.println(action);
-                            });
-                            System.out.println(rowFetch);
-                        }
+                        objectOutputStream.writeObject(obj);
+                        objectOutputStream.flush();
                         outputStream.writeUTF("ENTER THE REQUEST : \nJAVASQL> ");
                         outputStream.flush();
                         count++;
