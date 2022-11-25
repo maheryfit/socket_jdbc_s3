@@ -35,7 +35,7 @@ public class Server implements Runnable {
             Socket socket = null;
             try {
                 socket = this.serverSocket.accept();  
-                System.out.println("A new client is connected");
+                System.out.println("A new client is connected " + socket);
                 DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
                 DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
@@ -76,7 +76,7 @@ public class Server implements Runnable {
             String rowFetch = null;
             String receive = "";
             try {
-                name = inputStream.readUTF();
+                this.name = inputStream.readUTF();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 System.out.println(e.getLocalizedMessage());

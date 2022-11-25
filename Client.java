@@ -10,7 +10,7 @@ import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.LinkedList;
 
-public class Client implements Runnable {
+public class Client extends Thread {
     private Socket socket;
     private BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
     private DataOutputStream dataOutputStream;
@@ -30,46 +30,50 @@ public class Client implements Runnable {
             System.out.println(e.getCause());
         }
     }
-    @Override    
+    
+    @Override
     public void run() {
-        try {
-            if (first) {
-                System.out.print("Enter your name: ");
-                String name = bufferedReader.readLine();
-                dataOutputStream.writeUTF(name);
-                dataOutputStream.flush();
-                first = false;
-            }
-            while (true) {
-                String req = dataInputStream.readUTF();
-                System.out.print(req);
-                String toSend = bufferedReader.readLine();
-                dataOutputStream.writeUTF(toSend);
-                dataOutputStream.flush();
-                if (toSend.toLowerCase().equals("fin") || toSend.toLowerCase().equals("quit") || toSend.toLowerCase().equals("exit")) {
-                    System.out.println("Server> " + dataInputStream.readUTF());
-                    System.out.println("Connection to close...");
-                    socket.close();
-                    this.bufferedReader.close();
-                    this.dataInputStream.close();
-                    this.dataOutputStream.close();
-                    System.out.println("Connection closed");
-                    break;
-                } else {
-                    if (dataInputStream.readUTF().equals("table")) {
-                        LinkedList<String> datas = (LinkedList<String>) objectInputStream.readObject();
-                        String row = (String) objectInputStream.readObject();
-                        displayResult(datas, row);
-                    } else if(dataInputStream.readUTF().equals("message")) {
-                        String message = (String) objectInputStream.readObject();
-                        displayMessage(message);
-                    }
+        if (this.socket.isConnected()) {
+            try {
+                if (first) {
+                    System.out.print("Enter your name: ");
+                    String name = bufferedReader.readLine();
+                    dataOutputStream.writeUTF(name);
+                    dataOutputStream.flush();
+                    first = false;
                 }
+                while (true) {
+                    String req = dataInputStream.readUTF();
+                    System.out.print(req);
+                    String toSend = bufferedReader.readLine();
+                    dataOutputStream.writeUTF(toSend);
+                    dataOutputStream.flush();
+                    if (toSend.toLowerCase().equals("fin") || toSend.toLowerCase().equals("quit") || toSend.toLowerCase().equals("exit")) {
+                        System.out.println("Server> " + dataInputStream.readUTF());
+                        System.out.println("Connection to close...");
+                        socket.close();
+                        this.bufferedReader.close();
+                        this.dataInputStream.close();
+                        this.dataOutputStream.close();
+                        System.out.println("Connection closed");
+                        break;
+                    } else {
+                        LinkedList<String> toCast = new LinkedList<>();
+                        if (dataInputStream.readUTF().equals("table")) {
+                            LinkedList<String> datas = toCast.getClass().cast(objectInputStream.readObject());
+                            String row = (String) objectInputStream.readObject();
+                            displayResult(datas, row);
+                        } else if(dataInputStream.readUTF().equals("message")) {
+                            String message = objectInputStream.readObject().toString();
+                            displayMessage(message);
+                        }
+                    }
+                }   
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                System.out.println(e.getLocalizedMessage());
+                System.out.println(e.getCause());
             }   
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            System.out.println(e.getLocalizedMessage());
-            System.out.println(e.getCause());
         }
     }
 
