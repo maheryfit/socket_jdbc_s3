@@ -3,6 +3,8 @@ Le theme du projet SOCKET est Le J.D.B.C
 
 N.B: Les commandes telles que SELECT, FROM,... doivent etre en majuscules et que les noms de tables sont sensibles a la casse
 
+BONUS : Traitement de plusieurs clients(Multithreading)
+
 Commande existant :
 
 __ select : SELECT * FROM [nom table]
