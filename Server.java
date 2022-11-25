@@ -36,9 +36,9 @@ public class Server implements Runnable {
             try {
                 socket = this.serverSocket.accept();  
                 System.out.println("A new client is connected " + socket);
-                DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-                DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
                 SQL sql = new SQL();
                 ClientHandler clientHandler = new ClientHandler(socket, dataOutputStream, dataInputStream, objectOutputStream, sql);
                 System.out.println("Assigning a new thread to this client...");
@@ -71,9 +71,6 @@ public class Server implements Runnable {
         
         @Override 
         public void run() {
-            LinkedList<String> dataFetch = null;
-            String message = null;
-            String rowFetch = null;
             String receive = "";
             try {
                 this.name = inputStream.readUTF();
@@ -82,8 +79,11 @@ public class Server implements Runnable {
                 System.out.println(e.getLocalizedMessage());
                 System.out.println(e.getCause());
             }
-            boolean first = true;
-            System.out.println("User(Socket :"+ this.socket +")'s name : " + name);
+            LinkedList<String> dataFetch = new LinkedList<>();
+            String message = null;
+            String rowFetch = null;
+            boolean first = true; 
+            System.out.println("User's name : " + name);
             while (true) {
                 try {
                     if (first) {
@@ -92,22 +92,7 @@ public class Server implements Runnable {
                         first = false;   
                     }
                     receive = inputStream.readUTF();
-                    System.out.println(name + ">" + receive);
-                    sql.doRequest(receive, dataFetch, message, rowFetch);
-                    if (dataFetch == null) {
-                        outputStream.writeUTF("message");
-                        outputStream.flush();
-                        objectOutputStream.writeObject(message); 
-                        objectOutputStream.flush();
-                    }
-                    else {
-                        outputStream.writeUTF("table");
-                        outputStream.flush();
-                        objectOutputStream.writeObject(dataFetch);
-                        objectOutputStream.flush();
-                        objectOutputStream.writeObject(rowFetch);
-                        objectOutputStream.flush();
-                    }
+                    System.out.println(name + " >" + receive);
                     if (receive.toLowerCase().equals("fin") || receive.toLowerCase().equals("quit") || receive.toLowerCase().equals("exit")) {
                         String toSend = "";
                         if (count <= 1) 
@@ -118,6 +103,28 @@ public class Server implements Runnable {
                         outputStream.flush();
                         break;         
                     } else {
+                        Object obj = sql.doRequest(receive);
+                        if (obj instanceof String) {
+                            // outputStream.writeUTF("message");
+                            // outputStream.flush();
+                            // objectOutputStream.writeObject(message); 
+                            // objectOutputStream.flush();
+                            message = (String) obj;
+                            System.out.println(message + " >MESSAGE");
+                        }
+                        else if(obj instanceof LinkedList) {
+                            // outputStream.writeUTF("table");
+                            // outputStream.flush();
+                            // objectOutputStream.writeObject(dataFetch);
+                            // objectOutputStream.flush();
+                            // objectOutputStream.writeObject(rowFetch);
+                            // objectOutputStream.flush();
+                            dataFetch = (LinkedList) obj;
+                            dataFetch.forEach(action-> {
+                                System.out.println(action);
+                            });
+                            System.out.println(rowFetch);
+                        }
                         outputStream.writeUTF("ENTER THE REQUEST : \nJAVASQL> ");
                         outputStream.flush();
                         count++;

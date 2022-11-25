@@ -17,10 +17,8 @@ public class ClientMain {
      * @throws java.lang.Exception
      */
     public static void main(String[] args) throws Exception {
-        // Client client = new Client("localhost", 5050);
-        // client.doRequest();
-        Thread thread = new Client("localhost", 5050);
+        Client client = new Client("localhost", 5050);
+        Thread thread = new Thread(client);
         thread.start();
-    }
-    
+    }   
 }
