@@ -85,7 +85,7 @@ public class SQL {
     }
     
     public Object doRequest(String request) throws Exception {
-        if (request.equals("SHOW TABLE")) {
+        if (request.equals("SHOW TABLES")) {
             return displayResult(tableExistants);
         } else if(request.contains((CharSequence)"DELETE FROM")) {
             String name;
