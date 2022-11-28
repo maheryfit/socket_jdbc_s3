@@ -33,6 +33,6 @@ __ produit scalaire (valable avec ou sans condition) : SELECT * FROM [nom table]
 
 __ jointure (inner join) (valable avec ou sans condition) :  SELECT * FROM [nom table] JOIN SELECT * FROM [different nom table] ON [colonne qui est present dans les 2 tables]
 
-__ division (inner join) (valable avec ou sans condition) :  SELECT * FROM [nom table] DIVIDE SELECT * FROM [different nom table] ON [colonne qui est present dans les 2 tables]
+__ division (valable avec ou sans condition) :  SELECT * FROM [nom table] DIVIDE SELECT * FROM [different nom table] ON [colonne qui est present dans les 2 tables]
 
 __ lister les tables presents : SHOW TABLES
