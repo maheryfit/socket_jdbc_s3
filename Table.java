@@ -131,8 +131,8 @@ public class Table {
         LinkedList<String> cols = getColonnes(request, "AND COLUMNS ARE");
         File fichier = getFile(nom);
         File f = new File(System.getProperty("user.dir") + "/field/" + nom + ".json");
-        FileWriter fw = new FileWriter(f);
-        fw.close();
+        // FileWriter fw = new FileWriter(f);
+        f.exists();
         try (FileWriter fileWriter = new FileWriter(fichier)) {
             String toWrite = "[" + nom + "]:";
             int count = 0;
