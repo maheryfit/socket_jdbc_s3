@@ -27,39 +27,38 @@ public class Table {
         this.datas = new LinkedList<>();
         this.datasFetch = new LinkedList<>();
     }
-    
+
     public Table(String request) throws Exception {
-        if (request.contains((CharSequence)"CREATE TABLE") && request.contains((CharSequence)"AND COLUMNS ARE")) {
+        if (request.contains((CharSequence) "CREATE TABLE") && request.contains((CharSequence) "AND COLUMNS ARE")) {
             insertNewTab(request);
-        } else if(request.contains((CharSequence)"INSERT INTO") && request.contains((CharSequence)"VALUES")) {
+        } else if (request.contains((CharSequence) "INSERT INTO") && request.contains((CharSequence) "VALUES")) {
             insertData(request);
-        } else if(request.contains((CharSequence)"SELECT") && request.contains((CharSequence)"FROM")) {
+        } else if (request.contains((CharSequence) "SELECT") && request.contains((CharSequence) "FROM")) {
             select(request);
-        } else if(request.contains((CharSequence)"DELETE FROM")) {
+        } else if (request.contains((CharSequence) "DELETE FROM")) {
             delete(request);
         }
     }
-    
+
     private void delete(String request) throws Exception {
         String name;
-        if (!request.contains((CharSequence)"WHERE")) {
+        if (!request.contains((CharSequence) "WHERE")) {
             name = getNomTable(request, "FROM").trim();
             File file = getDataFile(name);
             file.deleteOnExit();
-        }
-        else {
+        } else {
             name = getNomTable(request, "WHERE", "FROM", 1).trim();
             String[] req = request.split("WHERE");
             String[] col = req[1].split("=");
             LinkedList<String> cond = selectionner(name, col[0].trim(), col[1].trim());
             String ajouter = apresSuppression(cond, name);
-            try (FileWriter fichier = new FileWriter(getDataFile(name),false)) {
+            try (FileWriter fichier = new FileWriter(getDataFile(name), false)) {
                 fichier.write(ajouter);
                 fichier.flush();
             }
         }
     }
-    
+
     private String apresSuppression(LinkedList<String> value, String nameTable) throws Exception {
         String aSupprimer = this.fetchDataInFile(nameTable);
         String data = "[";
@@ -73,7 +72,7 @@ public class Table {
             }
             if (!value.contains(donnee)) {
                 fetch.add(donnee);
-            }     
+            }
         }
         int count = 0;
         for (String string : fetch) {
@@ -86,38 +85,37 @@ public class Table {
         data += "]";
         return data;
     }
-    
-    
+
     public LinkedList<String> getDatasFetch() {
         return datasFetch;
     }
-    
+
     private File getDataFile(String name) {
-        return new File(System.getProperty("user.dir")+"/donnee/"+name+".json");
+        return new File(System.getProperty("user.dir") + "/donnee/" + name + ".json");
     }
-    
+
     private File getFile(String name) {
-        return new File(System.getProperty("user.dir")+"/field/"+name+".txt");
+        return new File(System.getProperty("user.dir") + "/field/" + name + ".txt");
     }
-    
+
     private String getNomTable(String request, String middle, String first) {
         String[] req = request.split(middle);
-        String table = req[0].replace(first," ").trim();
+        String table = req[0].replace(first, " ").trim();
         return table;
     }
-    
+
     private String getNomTable(String request, String middle) {
         String[] req = request.split(middle);
         String table = req[1].trim();
         return table;
     }
-    
+
     private String getNomTable(String request, String middle, String first, int position) {
         String[] req = request.split(middle);
         String[] table = req[0].split(first);
         return table[position];
     }
-    
+
     private LinkedList<String> getColonnes(String request, String splitteur) {
         String[] req = request.split(splitteur);
         String[] cols = req[1].split(",");
@@ -127,11 +125,14 @@ public class Table {
         }
         return aRetourner;
     }
-    
+
     private void insertNewTab(String request) throws Exception {
         String nom = getNomTable(request, "AND COLUMNS ARE", "CREATE TABLE");
         LinkedList<String> cols = getColonnes(request, "AND COLUMNS ARE");
         File fichier = getFile(nom);
+        File f = new File(System.getProperty("user.dir") + "/field/" + nom + ".json");
+        FileWriter fw = new FileWriter(f);
+        fw.close();
         try (FileWriter fileWriter = new FileWriter(fichier)) {
             String toWrite = "[" + nom + "]:";
             int count = 0;
@@ -145,7 +146,7 @@ public class Table {
             fileWriter.write(toWrite);
         }
     }
-    
+
     private String getFileTableTXT(String nom) throws Exception {
         File file = getFile(nom);
         String mot;
@@ -158,7 +159,7 @@ public class Table {
         }
         return mot;
     }
-    
+
     private LinkedList<String> getColonnesInTxt(String request, String middle, String first) throws Exception {
         String name = getNomTable(request, middle, first);
         String txt = getFileTableTXT(name);
@@ -169,7 +170,7 @@ public class Table {
         }
         return colonnes;
     }
-    
+
     private LinkedList<String> getData(String request) {
         String[] req = request.split("VALUES");
         String[] dts = req[1].split(",");
@@ -179,13 +180,14 @@ public class Table {
         }
         return aRetourner;
     }
-    
+
     private void insertData(String request) throws Exception {
         String name = getNomTable(request, "VALUES", "INSERT INTO");
         LinkedList<String> dts = getData(request);
         LinkedList<String> cls = getColonnesInTxt(request, "VALUES", "INSERT INTO");
         if (cls.isEmpty() || dts.isEmpty() || cls.size() != dts.size()) {
-            throw new Exception("ERREUR: INVALID DATA", new Throwable("THE DATA YOU HAVE ENTERED DOESN'T COMPLY WITH THE COLUMNS"));
+            throw new Exception("ERREUR: INVALID DATA",
+                    new Throwable("THE DATA YOU HAVE ENTERED DOESN'T COMPLY WITH THE COLUMNS"));
         }
         String data = "[";
         File file = getDataFile(name);
@@ -194,12 +196,12 @@ public class Table {
         }
         String toWrite = "{";
         for (int i = 0; i < dts.size(); i++) {
-            toWrite += "\"" + cls.get(i) +"\":";
+            toWrite += "\"" + cls.get(i) + "\":";
             String tmp = "";
             if (dts.get(i).matches("[+-]?\\d*(\\.\\d+)?")) { /// Tester si string est un nombre ou non
                 tmp = dts.get(i);
             } else {
-                tmp = "\""+dts.get(i)+"\"";
+                tmp = "\"" + dts.get(i) + "\"";
             }
             toWrite += tmp;
             if (i != dts.size() - 1) {
@@ -212,30 +214,30 @@ public class Table {
             writer.write(toWrite);
         }
     }
-    
+
     private String fetchDataInFile(String name) throws Exception {
         File fichier;
         fichier = getDataFile(name);
         String data;
         try (Scanner scanner = new Scanner(fichier)) {
             data = "";
-            while(scanner.hasNext()) {
+            while (scanner.hasNext()) {
                 data = scanner.nextLine();
             }
         }
         String aRetourner = data.replace('[', ' ').replace(']', ' ').trim();
         return aRetourner;
     }
-    
+
     private String[] retrieveData(String name) throws Exception {
         String[] tabs = fetchDataInFile(name).split("},");
-        for(int i = 0 ; i < tabs.length - 1; i++) {
+        for (int i = 0; i < tabs.length - 1; i++) {
             String concat = tabs[i].concat("}").trim();
             tabs[i] = concat;
         }
         return tabs;
     }
-    
+
     private LinkedList<TreeMap<String, String>> stringToObject(String name) throws Exception {
         String[] d = retrieveData(name);
         for (String string : d) {
@@ -251,7 +253,7 @@ public class Table {
         }
         return this.datas;
     }
-    
+
     private LinkedList<TreeMap<String, String>> stringToObject(LinkedList<String> d) throws Exception {
         LinkedList<TreeMap<String, String>> aRetourner = new LinkedList<>();
         d.stream().map((liste) -> liste.replace("{", " ").replace("}", " ").trim()).map((str) -> {
@@ -269,7 +271,7 @@ public class Table {
         });
         return aRetourner;
     }
-    
+
     private LinkedList<String> selectionner(String name) throws Exception {
         LinkedList<TreeMap<String, String>> dts = stringToObject(name);
         LinkedList<String> aRetourner = new LinkedList<>();
@@ -280,7 +282,7 @@ public class Table {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 inside += key + ":" + value;
-                if(count != dt.size() - 1) {
+                if (count != dt.size() - 1) {
                     inside += ",";
                 }
                 count++;
@@ -296,16 +298,16 @@ public class Table {
         });
         return aRetourner;
     }
-    
+
     private void select(String request) throws Exception {
-        if (request.contains((CharSequence)"*") && !request.contains((CharSequence)"WHERE")) {
+        if (request.contains((CharSequence) "*") && !request.contains((CharSequence) "WHERE")) {
             String name = getNomTable(request, "FROM");
             this.datasFetch = selectionner(name);
-        } else if (!request.contains((CharSequence)"*") && !request.contains((CharSequence)"WHERE")) {
+        } else if (!request.contains((CharSequence) "*") && !request.contains((CharSequence) "WHERE")) {
             String name = getNomTable(request, "FROM");
             String[] cols = getColumnsInRequest(request);
             this.datasFetch = selectionner(name, cols);
-        } else if (request.contains((CharSequence)"*") && request.contains((CharSequence)"WHERE")) {
+        } else if (request.contains((CharSequence) "*") && request.contains((CharSequence) "WHERE")) {
             String[] tab = request.split("FROM");
             String[] tab2 = tab[1].split("WHERE");
             String name = tab2[0].trim();
@@ -325,7 +327,7 @@ public class Table {
                         LinkedList<String> listeStr2 = selectionner(name, cond2[0].trim(), cond2[1].trim());
                         this.datasFetch = union(listeStr1, listeStr2);
                     }
-                } else if(val[1].contains("AND")) {
+                } else if (val[1].contains("AND")) {
                     String[] conds = val[1].split("AND");
                     String[] cond1 = conds[0].trim().split("=");
                     String[] cond2 = conds[1].trim().split("=");
@@ -337,10 +339,10 @@ public class Table {
                         this.datasFetch = listeStr2;
                     }
                 } else {
-                    this.datasFetch = new LinkedList<>();    
+                    this.datasFetch = new LinkedList<>();
                 }
             }
-        } else if (!request.contains((CharSequence)"*") && request.contains((CharSequence)"WHERE")) {
+        } else if (!request.contains((CharSequence) "*") && request.contains((CharSequence) "WHERE")) {
             String[] tab = request.split("FROM");
             String[] tab2 = tab[1].split("WHERE");
             String name = tab2[0].trim();
@@ -362,7 +364,7 @@ public class Table {
                         LinkedList<String> listeStr2 = selectionner(name, cond2[0].trim(), cond2[1].trim());
                         this.datasFetch = union(listeStr1, listeStr2);
                     }
-                } else if(val[1].contains("AND")) {
+                } else if (val[1].contains("AND")) {
                     String[] conds = val[1].split("AND");
                     String[] cond1 = conds[0].trim().split("=");
                     String[] cond2 = conds[1].trim().split("=");
@@ -373,11 +375,12 @@ public class Table {
                         LinkedList<String> listeStr2 = selectionner(listeStr1, cond2[0].trim(), cond2[1].trim());
                         this.datasFetch = listeStr2;
                     }
-                } else this.datasFetch = new LinkedList<>();
+                } else
+                    this.datasFetch = new LinkedList<>();
             }
         }
     }
-    
+
     private static LinkedList<String> union(LinkedList<String> table1, LinkedList<String> table2) {
         LinkedList<String> newTab = new LinkedList<>();
         table1.forEach((tab) -> {
@@ -385,17 +388,17 @@ public class Table {
         });
         table2.forEach((tab) -> {
             if (!newTab.contains(tab)) {
-                newTab.add(tab);   
+                newTab.add(tab);
             }
         });
         return newTab;
     }
-    
+
     private LinkedList<String> selectionner(String name, String... columns) throws Exception {
         LinkedList<TreeMap<String, String>> dts = stringToObject(name);
         return trtColumns(dts, columns);
     }
-    
+
     private LinkedList<String> trtColumns(LinkedList<TreeMap<String, String>> dts, String... columns) throws Exception {
         LinkedList<String> aRetourner = new LinkedList<>();
         dts.stream().map((dt) -> {
@@ -403,7 +406,7 @@ public class Table {
             int i = 0;
             for (String column : columns) {
                 r += "\"" + column + "\":" + dt.get("\"" + column + "\"");
-                if (i != columns.length - 1) 
+                if (i != columns.length - 1)
                     r += ",";
                 i++;
             }
@@ -421,15 +424,16 @@ public class Table {
         }
         return aRetourner;
     }
-    
-    private LinkedList<String> trtConditions(LinkedList<TreeMap<String, String>> dts, String column, String valeur) throws Exception {
+
+    private LinkedList<String> trtConditions(LinkedList<TreeMap<String, String>> dts, String column, String valeur)
+            throws Exception {
         LinkedList<String> aRetourner = new LinkedList<>();
         for (TreeMap<String, String> dt : dts) {
             String huhu = new String();
             if (!valeur.matches("[+-]?\\d*(\\.\\d+)?")) {
                 valeur = "\"" + valeur + "\"";
             }
-            String str = dt.get("\""+ column + "\"").replace("\"", " ").trim();
+            String str = dt.get("\"" + column + "\"").replace("\"", " ").trim();
             if (str.compareTo(valeur.replace("\"", " ").trim()) == 0) {
                 huhu = format(dt);
             }
@@ -442,27 +446,27 @@ public class Table {
         }
         return aRetourner;
     }
-    
+
     private LinkedList<String> selectionner(LinkedList<String> listes, String... columns) throws Exception {
         LinkedList<TreeMap<String, String>> dts = stringToObject(listes);
         return trtColumns(dts, columns);
     }
-    
+
     private LinkedList<String> selectionner(String name, String column, String valeur) throws Exception {
         LinkedList<TreeMap<String, String>> dts = stringToObject(name);
         return trtConditions(dts, column, valeur);
     }
-    
+
     private LinkedList<String> selectionner(LinkedList<String> listes, String column, String valeur) throws Exception {
         LinkedList<TreeMap<String, String>> dts = stringToObject(listes);
         return trtConditions(dts, column, valeur);
     }
-    
+
     private boolean isAnotherConditions(String request) {
         String[] req = request.split("WHERE");
         return req[1].contains("AND") || req[1].contains("OR");
     }
-    
+
     private String format(TreeMap<String, String> dt) throws Exception {
         String aRetourner = "{";
         int i = 0;
@@ -478,11 +482,11 @@ public class Table {
         aRetourner += "}";
         return aRetourner;
     }
-    
+
     private boolean containsNull(LinkedList<String> strings) {
         return strings.stream().anyMatch((string) -> (string.contains((CharSequence) "null")));
     }
-    
+
     private String[] getColumnsInRequest(String request) {
         LinkedList<String> liste = new LinkedList<>();
         String[] separe = request.split("FROM");
