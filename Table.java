@@ -37,7 +37,26 @@ public class Table {
             select(request);
         } else if (request.contains((CharSequence) "DELETE FROM")) {
             delete(request);
+        } else if (request.contains((CharSequence) "DESC")) {
+            describeTable(request);
         }
+    }
+
+    private LinkedList<String> describeTable(String request) throws Exception {
+        String nameTable = request.split("DESC")[1].trim();
+        String string = getFileTableTXT(nameTable);
+        String columnString = string.split("]:")[1].trim();
+        String[] columns = columnString.split(",");
+        int count = 0;
+        for (String column : columns) {
+            count++;
+            this.colonnes.add("[" + count + "]=>" + column);
+        }
+        return this.colonnes;
+    }
+
+    public LinkedList<String> getColonnes() {
+        return this.colonnes;
     }
 
     private void delete(String request) throws Exception {
@@ -50,8 +69,7 @@ public class Table {
             name = getNomTable(request, "WHERE", "FROM", 1).trim();
             String[] req = request.split("WHERE");
             String[] col = req[1].split("=");
-            LinkedList<String> cond = selectionner(name, col[0].trim(), col[1].trim());
-            String ajouter = apresSuppression(cond, name);
+            String ajouter = apresSuppression(col[0].trim(), col[1].trim(), name);
             try (FileWriter fichier = new FileWriter(getDataFile(name), false)) {
                 fichier.write(ajouter);
                 fichier.flush();
@@ -59,19 +77,17 @@ public class Table {
         }
     }
 
-    private String apresSuppression(LinkedList<String> value, String nameTable) throws Exception {
-        String aSupprimer = this.fetchDataInFile(nameTable);
+    private String apresSuppression(String column, String value, String nameTable) throws Exception {
         String data = "[";
-        aSupprimer = aSupprimer.replace("[", " ").replace("]", " ").trim();
-        String[] ds = aSupprimer.split("},");
+        LinkedList<String> ds = selectionner(nameTable);
         LinkedList<String> fetch = new LinkedList<>();
+        if (!value.matches("[+-]?\\d*(\\.\\d+)?")) {
+            value = "\"" + value + "\"";
+        }
+        String cond = "\"" + column + "\":" + value;
         for (String d : ds) {
-            String donnee = d;
-            if (!d.endsWith("}")) {
-                donnee += "}";
-            }
-            if (!value.contains(donnee)) {
-                fetch.add(donnee);
+            if (!d.contains(cond)) {
+                fetch.add(d);
             }
         }
         int count = 0;
@@ -119,11 +135,10 @@ public class Table {
     private LinkedList<String> getColonnes(String request, String splitteur) {
         String[] req = request.split(splitteur);
         String[] cols = req[1].split(",");
-        LinkedList<String> aRetourner = new LinkedList<>();
         for (String col : cols) {
-            aRetourner.add(col.trim());
+            this.colonnes.add(col.trim());
         }
-        return aRetourner;
+        return this.colonnes;
     }
 
     private void insertNewTab(String request) throws Exception {
@@ -166,7 +181,7 @@ public class Table {
         String[] cols = txt.split(":");
         String[] eachCol = cols[1].split(",");
         for (String string : eachCol) {
-            colonnes.add(string.trim());
+            colonnes.add(string);
         }
         return colonnes;
     }

@@ -20,27 +20,28 @@ public class Server implements Runnable {
     public Server(int port) {
         try {
             this.serverSocket = new ServerSocket(port);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             System.out.println(e.getLocalizedMessage());
             System.out.println(e.getCause());
         }
     }
-    
+
     @Override
     public void run() {
-        while (true) {
+        boolean open = true;
+        while (open) {
             System.out.println("Wait for request...");
             Socket socket = null;
             try {
-                socket = this.serverSocket.accept();  
+                socket = this.serverSocket.accept();
                 System.out.println("A new client is connected " + socket);
                 DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
                 DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
                 SQL sql = new SQL();
-                ClientHandler clientHandler = new ClientHandler(socket, dataOutputStream, dataInputStream, objectOutputStream, sql);
+                ClientHandler clientHandler = new ClientHandler(socket, dataOutputStream, dataInputStream,
+                        objectOutputStream, sql);
                 System.out.println("Assigning a new thread to this client...");
                 Thread thread = new Thread(clientHandler);
                 thread.start();
@@ -48,6 +49,7 @@ public class Server implements Runnable {
                 System.out.println(e.getMessage());
                 System.out.println(e.getLocalizedMessage());
                 System.out.println(e.getCause());
+                open = false;
             }
         }
     }
@@ -61,15 +63,16 @@ public class Server implements Runnable {
         private DataInputStream inputStream;
         private ObjectOutputStream objectOutputStream;
 
-        public ClientHandler(Socket socket, DataOutputStream outputStream, DataInputStream inputStream, ObjectOutputStream objectOutputStream, SQL sql) {
+        public ClientHandler(Socket socket, DataOutputStream outputStream, DataInputStream inputStream,
+                ObjectOutputStream objectOutputStream, SQL sql) {
             this.socket = socket;
             this.outputStream = outputStream;
             this.inputStream = inputStream;
             this.objectOutputStream = objectOutputStream;
             this.sql = sql;
-        }        
-        
-        @Override 
+        }
+
+        @Override
         public void run() {
             String receive = "";
             try {
@@ -80,26 +83,27 @@ public class Server implements Runnable {
                 System.out.println(e.getCause());
             }
             LinkedList<String> dataFetch = new LinkedList<>();
-            boolean first = true; 
+            boolean first = true;
             System.out.println("User's name : " + name);
             while (true) {
                 try {
                     if (first) {
                         outputStream.writeUTF("ENTER THE REQUEST : \nJAVASQL> ");
                         outputStream.flush();
-                        first = false;   
+                        first = false;
                     }
                     receive = inputStream.readUTF();
                     System.out.println(name + " >" + receive);
-                    if (receive.toLowerCase().equals("fin") || receive.toLowerCase().equals("quit") || receive.toLowerCase().equals("exit")) {
+                    if (receive.toLowerCase().equals("fin") || receive.toLowerCase().equals("quit")
+                            || receive.toLowerCase().equals("exit")) {
                         String toSend = "";
-                        if (count <= 1) 
-                            toSend = "Today " + LocalDate.now() + ", you executed " + count + " request";   
-                        else 
-                            toSend = "Today " + LocalDate.now() + ", you executed " + count + " requests";          
+                        if (count <= 1)
+                            toSend = "Today " + LocalDate.now() + ", you executed " + count + " request";
+                        else
+                            toSend = "Today " + LocalDate.now() + ", you executed " + count + " requests";
                         outputStream.writeUTF(toSend + "\nHAVE A NICE DAY :D");
                         outputStream.flush();
-                        break;         
+                        break;
                     } else {
                         Object obj = sql.doRequest(receive);
                         objectOutputStream.writeObject(obj);
@@ -122,7 +126,7 @@ public class Server implements Runnable {
                 System.out.println(e.getMessage());
                 System.out.println(e.getLocalizedMessage());
                 System.out.println(e.getCause());
-            } 
+            }
         }
     }
 }
