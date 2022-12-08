@@ -17,8 +17,6 @@ __ select avec colonne et condition : SELECT colonnes FROM nom_table WHERE colon
 
 __ insertion : INSERT INTO nom_table VALUES valeur, valeur, valeur, ...
 
-__ suppression : DELETE FROM nom_table
-
 __ suppression avec condition : DELETE FROM nom_table  WHERE colonne = valeur
 
 __ creation de table : CREATE TABLE nom_table AND COLUMNS ARE nom_colonne, nom_colonne, ...
