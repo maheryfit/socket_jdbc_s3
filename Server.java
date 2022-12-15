@@ -72,6 +72,13 @@ public class Server implements Runnable {
             this.sql = sql;
         }
 
+        private void sendMessageToClient(Object object, String message) throws Exception {
+            objectOutputStream.writeObject(object);
+            objectOutputStream.flush();
+            outputStream.writeUTF(message);
+            outputStream.flush();
+        }
+
         @Override
         public void run() {
             String receive = "";
@@ -106,13 +113,16 @@ public class Server implements Runnable {
                         break;
                     } else {
                         Object obj = sql.doRequest(receive);
-                        objectOutputStream.writeObject(obj);
-                        objectOutputStream.flush();
-                        outputStream.writeUTF("ENTER THE REQUEST : \nJAVASQL> ");
-                        outputStream.flush();
+                        sendMessageToClient(obj, "ENTER THE REQUEST : \nJAVASQL> ");
                         count++;
                     }
                 } catch (Exception e) {
+                    try {
+                        sendMessageToClient(e.getMessage(), "ENTER THE REQUEST : \nJAVASQL> ");
+                        count++;
+                    } catch (Exception ex) {
+                        System.out.println("ERROR INTERNE");
+                    }
                     System.out.println(e.getMessage());
                     System.out.println(e.getLocalizedMessage());
                     System.out.println(e.getCause());

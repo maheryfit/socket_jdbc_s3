@@ -72,6 +72,46 @@ public class SQL {
         return mot;
     }
 
+    private File getFile(String directory, String name, String extension) throws Exception {
+        String nameFile = name + "." + extension;
+        File[] files = new File(System.getProperty("user.dir") + "/" + directory).listFiles();
+        for (File file : files) {
+            if (nameFile.trim().equals(file.getName().trim())) {
+                return file;
+            }
+        }
+        return null;
+    }
+
+    private void deleteNameTable(String nameTable) throws Exception {
+        String names = getFileTableTXT();
+        String[] tnames = names.split("&&");
+        LinkedList<String> nms = new LinkedList<>();
+        for (String tname : tnames) {
+            if (!nameTable.equals(tname)) {
+                nms.add(tname);
+            }
+        }
+        String enter = "";
+        for (String nm : nms) {
+            enter += nm;
+            enter += "&&";
+        }
+        try (FileWriter fileWriter = new FileWriter(getFile())) {
+            fileWriter.write(enter);
+            fileWriter.flush();
+        }
+    }
+
+    private String deleteTable(String table) throws Exception {
+        File fileTxt = getFile("field", table, "txt");
+        fileTxt.delete();
+        File fileJson = getFile("donnee", table, "json");
+        fileJson.delete();
+        this.deleteNameTable(table);
+        return "TABLE " + table + " DELETED";
+    }
+
     private LinkedList<String> getFileTable() throws Exception {
         String colStr = getFileTableTXT();
         String[] tables = colStr.split("&&");
@@ -86,105 +126,113 @@ public class SQL {
     }
 
     public Object doRequest(String request) throws Exception {
-        if (request.equals("SHOW TABLES")) {
-            return displayResult(tableExistants);
-        } else if (request.contains((CharSequence) "DESC")) {
-            String nameTable = request.split("DESC")[1].trim();
-            if (!isTableExist(nameTable)) {
-                return "ERROR: YOU TRIED TO DESCRIBE A TABLE WHO DOESN'T EXIST";
-            } else {
-                Table table = new Table(request);
-                return table.getColonnes();
-            }
-        } else if (request.contains((CharSequence) "DELETE FROM")) {
-            String name;
-            if (!request.contains((CharSequence) "WHERE")) {
-                name = getNomTable(request, "FROM").trim();
-            } else {
-                name = getNomTable(request, "WHERE", "FROM", 1).trim();
-            }
-            if (!isTableExist(name)) {
-                return "ERROR: YOU TRIED TO DELETE IN A TABLE WHO DOESN'T EXIST";
-            } else {
-                Table table = new Table(request);
-                return "Data deleted";
-            }
-        } else if (request.contains((CharSequence) "CREATE TABLE")
-                && request.contains((CharSequence) "AND COLUMNS ARE")) {
-            String name = getNomTable(request, "AND COLUMNS ARE", "CREATE TABLE");
-            if (!isTableExist(name)) {
-                insertToFileTable(request);
-                Table table = new Table(request);
-                return "TABLE CREATED";
-            } else {
-                return "ERROR: THE TABLE ALREADY EXISTED";
-            }
-        } else if (request.contains((CharSequence) "INSERT INTO") && request.contains((CharSequence) "VALUES")) {
-            String name = getNomTable(request, "VALUES", "INSERT INTO");
-            if (isTableExist(name)) {
-                try {
-                    Table table = new Table(request);
-                    return "Data add";
-                } catch (Exception e) {
-                    return e.getMessage() + ", " + e.getCause().toString();
-                }
-            } else {
-                return "ERROR: YOU TRIED TO INSERT DATA IN A TABLE WHO DOESN'T EXIST";
-            }
-        } else if (request.contains((CharSequence) "SELECT") && request.contains((CharSequence) "FROM")
-                && !request.contains((CharSequence) "UNION") && !request.contains((CharSequence) "INTERSECT")
-                && !request.contains((CharSequence) "NOT IN") && !request.contains((CharSequence) "DIVIDE BY")
-                && !request.contains((CharSequence) "PRODUCT WITH") && !request.contains((CharSequence) "JOIN")) {
-            String name;
-            if (request.contains("WHERE")) {
-                String[] tab = request.split("FROM");
-                String[] tab2 = tab[1].split("WHERE");
-                name = tab2[0].trim();
-            } else {
-                name = getNomTable(request, "FROM");
-            }
-            if (isTableExist(name)) {
-                Table table = new Table(request);
-                LinkedList<String> tableaux = table.getDatasFetch();
-                if (tableaux == null) {
-                    return "ERROR: INVALID COLUMN";
+        try {
+            if (request.contains("DROP")) {
+                String name = request.split("DROP")[1].trim();
+                return deleteTable(name);
+            } else if (request.equals("SHOW TABLES")) {
+                return getFileTable();
+            } else if (request.contains((CharSequence) "DESC")) {
+                String nameTable = request.split("DESC")[1].trim();
+                if (!isTableExist(nameTable)) {
+                    return "ERROR: YOU TRIED TO DESCRIBE A TABLE WHO DOESN'T EXIST";
                 } else {
-                    if (tableaux.isEmpty())
-                        return "NO DATA SELECTED";
-                    else
-                        return displayResult(tableaux);
+                    Table table = new Table(request);
+                    return table.getColonnes();
                 }
-            } else {
-                return "ERROR: YOU TRIED TO SELECT DATA IN A TABLE WHO DOESN'T EXIST";
-            }
-        } else if (request.contains((CharSequence) "SELECT") && request.contains((CharSequence) "FROM")
-                || request.contains((CharSequence) "UNION") || request.contains((CharSequence) "INTERSECT")
-                || request.contains((CharSequence) "NOT IN") || request.contains((CharSequence) "DIVIDE BY")
-                || request.contains((CharSequence) "PRODUCT WITH") || request.contains((CharSequence) "JOIN")) {
-            String nameTab1 = "";
-            String nameTab2 = "";
-            if (request.contains("UNION") || request.contains("INTERSECT") || request.contains("NOT IN")) {
-                if (request.contains("UNION"))
-                    return onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "UNION");
-                else if (request.contains("INTERSECT"))
-                    return onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "INTERSECT");
-                else
-                    return onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "NOT IN");
-            } else if (request.contains("PRODUCT WITH") || request.contains("JOIN") || request.contains("DIVIDE BY")) {
-                if (request.contains("PRODUCT WITH"))
-                    return onlyProjectionJoinDivide(request, nameTab1, nameTab2, "PRODUCT WITH");
-                if (request.contains("ON")) {
-                    if (request.contains("JOIN"))
-                        return onlyProjectionJoinDivide(request, nameTab1, nameTab2, "JOIN");
+            } else if (request.contains((CharSequence) "DELETE FROM")) {
+                String name;
+                if (!request.contains((CharSequence) "WHERE")) {
+                    name = getNomTable(request, "FROM").trim();
+                } else {
+                    name = getNomTable(request, "WHERE", "FROM", 1).trim();
+                }
+                if (!isTableExist(name)) {
+                    return "ERROR: YOU TRIED TO DELETE IN A TABLE WHO DOESN'T EXIST";
+                } else {
+                    Table table = new Table(request);
+                    return "DATA DELETED";
+                }
+            } else if (request.contains((CharSequence) "CREATE TABLE")
+                    && request.contains((CharSequence) "AND COLUMNS ARE")) {
+                String name = getNomTable(request, "AND COLUMNS ARE", "CREATE TABLE");
+                if (!isTableExist(name)) {
+                    insertToFileTable(request);
+                    Table table = new Table(request);
+                    return "TABLE CREATED";
+                } else {
+                    return "ERROR: THE TABLE ALREADY EXISTED";
+                }
+            } else if (request.contains((CharSequence) "INSERT INTO") && request.contains((CharSequence) "VALUES")) {
+                String name = getNomTable(request, "VALUES", "INSERT INTO");
+                if (isTableExist(name)) {
+                    try {
+                        Table table = new Table(request);
+                        return "DATA ADD";
+                    } catch (Exception e) {
+                        return e.getMessage() + ", " + e.getCause().toString();
+                    }
+                } else {
+                    return "ERROR: YOU TRIED TO INSERT DATA IN A TABLE WHO DOESN'T EXIST";
+                }
+            } else if (request.contains((CharSequence) "SELECT") && request.contains((CharSequence) "FROM")
+                    && !request.contains((CharSequence) "UNION") && !request.contains((CharSequence) "INTERSECT")
+                    && !request.contains((CharSequence) "NOT IN") && !request.contains((CharSequence) "DIVIDE BY")
+                    && !request.contains((CharSequence) "PRODUCT WITH") && !request.contains((CharSequence) "JOIN")) {
+                String name;
+                if (request.contains("WHERE")) {
+                    String[] tab = request.split("FROM");
+                    String[] tab2 = tab[1].split("WHERE");
+                    name = tab2[0].trim();
+                } else {
+                    name = getNomTable(request, "FROM");
+                }
+                if (isTableExist(name)) {
+                    Table table = new Table(request);
+                    LinkedList<String> tableaux = table.getDatasFetch();
+                    if (tableaux == null) {
+                        return "ERROR: INVALID COLUMN";
+                    } else {
+                        if (tableaux.isEmpty())
+                            return "NO DATA SELECTED";
+                        else
+                            return displayResult(tableaux);
+                    }
+                } else {
+                    return "ERROR: YOU TRIED TO SELECT DATA IN A TABLE WHO DOESN'T EXIST";
+                }
+            } else if (request.contains((CharSequence) "SELECT") && request.contains((CharSequence) "FROM")
+                    || request.contains((CharSequence) "UNION") || request.contains((CharSequence) "INTERSECT")
+                    || request.contains((CharSequence) "NOT IN") || request.contains((CharSequence) "DIVIDE BY")
+                    || request.contains((CharSequence) "PRODUCT WITH") || request.contains((CharSequence) "JOIN")) {
+                String nameTab1 = "";
+                String nameTab2 = "";
+                if (request.contains("UNION") || request.contains("INTERSECT") || request.contains("NOT IN")) {
+                    if (request.contains("UNION"))
+                        return onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "UNION");
+                    else if (request.contains("INTERSECT"))
+                        return onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "INTERSECT");
                     else
-                        return onlyProjectionJoinDivide(request, nameTab1, nameTab2, "DIVIDE BY");
-                } else
-                    return "ERROR: INVALID COMMAND";
-            } else {
-                return "ERROR: PLEASE REVIRIFY YOUR ORDER";
+                        return onlyUnionDifferenceIntersect(request, nameTab1, nameTab2, "NOT IN");
+                } else if (request.contains("PRODUCT WITH") || request.contains("JOIN")
+                        || request.contains("DIVIDE BY")) {
+                    if (request.contains("PRODUCT WITH"))
+                        return onlyProjectionJoinDivide(request, nameTab1, nameTab2, "PRODUCT WITH");
+                    if (request.contains("ON")) {
+                        if (request.contains("JOIN"))
+                            return onlyProjectionJoinDivide(request, nameTab1, nameTab2, "JOIN");
+                        else
+                            return onlyProjectionJoinDivide(request, nameTab1, nameTab2, "DIVIDE BY");
+                    } else
+                        return "ERROR: INVALID COMMAND";
+                } else {
+                    return "ERROR: PLEASE REVIRIFY YOUR ORDER";
+                }
             }
+            return "ERROR: PLEASE REVIRIFY YOUR ORDER";
+        } catch (Exception e) {
+            throw e;
         }
-        return "ERROR: PLEASE REVIRIFY YOUR ORDER";
     }
 
     private Object onlyUnionDifferenceIntersect(String request, String nameTab1, String nameTab2, String splitter)

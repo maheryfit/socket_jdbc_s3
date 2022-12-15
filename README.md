@@ -38,3 +38,5 @@ __ division (valable avec ou sans condition) :  SELECT * FROM nom_table DIVIDE S
 __ lister les tables presents : SHOW TABLES
 
 __ lister les noms de colonnes d'une table : DESC nom_table
+
+__ supprimer la table : DROP nom_table

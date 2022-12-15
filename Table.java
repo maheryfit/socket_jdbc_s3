@@ -63,8 +63,7 @@ public class Table {
         String name;
         if (!request.contains((CharSequence) "WHERE")) {
             name = getNomTable(request, "FROM").trim();
-            File file = getDataFile(name);
-            file.deleteOnExit();
+            initializeFile(name);
         } else {
             name = getNomTable(request, "WHERE", "FROM", 1).trim();
             String[] req = request.split("WHERE");
@@ -141,13 +140,22 @@ public class Table {
         return this.colonnes;
     }
 
+    private void initializeFile(String nom) throws Exception {
+        File f = getDataFile(nom);
+        if (!f.exists()) {
+            f.createNewFile();
+        }
+        try (FileWriter fileWriter = new FileWriter(f)) {
+            fileWriter.write("[]");
+            fileWriter.flush();
+        }
+    }
+
     private void insertNewTab(String request) throws Exception {
         String nom = getNomTable(request, "AND COLUMNS ARE", "CREATE TABLE");
         LinkedList<String> cols = getColonnes(request, "AND COLUMNS ARE");
+        initializeFile(nom);
         File fichier = getFile(nom);
-        File f = new File(System.getProperty("user.dir") + "/field/" + nom + ".json");
-        // FileWriter fw = new FileWriter(f);
-        f.exists();
         try (FileWriter fileWriter = new FileWriter(fichier)) {
             String toWrite = "[" + nom + "]:";
             int count = 0;
@@ -245,6 +253,9 @@ public class Table {
     }
 
     private String[] retrieveData(String name) throws Exception {
+        if (fetchDataInFile(name).equals("")) {
+            throw new Exception("THERE IS NO DATA IN THIS TABLE");
+        }
         String[] tabs = fetchDataInFile(name).split("},");
         for (int i = 0; i < tabs.length - 1; i++) {
             String concat = tabs[i].concat("}").trim();
