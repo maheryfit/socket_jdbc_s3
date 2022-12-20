@@ -42,6 +42,13 @@ public class Table {
         }
     }
 
+    private void traitementSousRequete(String request) throws Exception {
+        String[] reqs = request.split("(");
+        for (String req : reqs) {
+            System.out.println(req);
+        }
+    }
+
     private LinkedList<String> describeTable(String request) throws Exception {
         String nameTable = request.split("DESC")[1].trim();
         String string = getFileTableTXT(nameTable);
@@ -214,7 +221,7 @@ public class Table {
         }
         String data = "[";
         File file = getDataFile(name);
-        if (!file.createNewFile()) {
+        if (!file.createNewFile() && !fetchDataInFile(name).equals(" ".trim())) {
             data += this.fetchDataInFile(name) + ",";
         }
         String toWrite = "{";
@@ -326,13 +333,12 @@ public class Table {
     }
 
     private void select(String request) throws Exception {
+        String nom = getNomTable(request, "FROM");
         if (request.contains((CharSequence) "*") && !request.contains((CharSequence) "WHERE")) {
-            String name = getNomTable(request, "FROM");
-            this.datasFetch = selectionner(name);
+            this.datasFetch = selectionner(nom);
         } else if (!request.contains((CharSequence) "*") && !request.contains((CharSequence) "WHERE")) {
-            String name = getNomTable(request, "FROM");
             String[] cols = getColumnsInRequest(request);
-            this.datasFetch = selectionner(name, cols);
+            this.datasFetch = selectionner(nom, cols);
         } else if (request.contains((CharSequence) "*") && request.contains((CharSequence) "WHERE")) {
             String[] tab = request.split("FROM");
             String[] tab2 = tab[1].split("WHERE");

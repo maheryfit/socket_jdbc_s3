@@ -20,7 +20,38 @@ import mg.table.Table;
  */
 public class SQL {
 
+    private void writeToJson(LinkedList<String> tableaux) throws Exception {
+        String data = "[";
+        int count = 0;
+        for (String tableau : tableaux) {
+            data += tableau;
+            if (count != tableaux.size() - 1) {
+                data += ",";
+            }
+            count++;
+        }
+        data += "]";
+        try (FileWriter fileWriter = new FileWriter(System.getProperty("user.dir") + "/donnee/sousRequete.json")) {
+            fileWriter.write(data);
+            fileWriter.flush();
+        }
+    }
+
+    private boolean isAnotherSousRequete(String request) throws Exception {
+        String[] reqs = request.split("FETCH FROM");
+        reqs[0] = reqs[0].trim();
+        reqs[1] = reqs[1].trim();
+        int count = 0;
+        for (String req : reqs) {
+            if (req.contains("SELECT")) {
+                count++;
+            }
+        }
+        return count == 2;
+    }
+
     private final LinkedList<String> tableExistants;
+
     {
         tableExistants = new LinkedList<>();
     }
@@ -109,7 +140,7 @@ public class SQL {
         File fileJson = getFile("donnee", table, "json");
         fileJson.delete();
         this.deleteNameTable(table);
-        return "TABLE " + table + " DELETED";
+        return "TABLE " + table + " DROPPED";
     }
 
     private LinkedList<String> getFileTable() throws Exception {
@@ -122,6 +153,9 @@ public class SQL {
     }
 
     private boolean isTableExist(String nom) throws Exception {
+        if (getFileTable().isEmpty()) {
+            return false;
+        }
         return getFileTable().contains(nom);
     }
 
@@ -131,7 +165,17 @@ public class SQL {
                 String name = request.split("DROP")[1].trim();
                 return deleteTable(name);
             } else if (request.equals("SHOW TABLES")) {
-                return getFileTable();
+                int count = 0;
+                LinkedList<String> listes = getFileTable();
+                for (String string : listes) {
+                    if (string.equals("")) {
+                        count++;
+                    }
+                }
+                if (count == listes.size()) {
+                    return "THERE IS NO TABLE";
+                }
+                return listes;
             } else if (request.contains((CharSequence) "DESC")) {
                 String nameTable = request.split("DESC")[1].trim();
                 if (!isTableExist(nameTable)) {
@@ -180,6 +224,22 @@ public class SQL {
                     && !request.contains((CharSequence) "NOT IN") && !request.contains((CharSequence) "DIVIDE BY")
                     && !request.contains((CharSequence) "PRODUCT WITH") && !request.contains((CharSequence) "JOIN")) {
                 String name;
+                String otherRequest = null;
+                String suite = "";
+                if (request.contains("FETCH FROM")) {
+                    if (isAnotherSousRequete(request)) {
+                        String[] reqs = request.split("FETCH FROM");
+                        String req1 = reqs[1].trim();
+                        if (req1.contains("LIMIT")) {
+                            suite = req1.split("LIMIT")[1].trim();
+                            req1 = req1.split("LIMIT")[0].trim();
+                        }
+                        otherRequest = reqs[0].trim();
+                        request = req1;
+                    } else {
+                        return "ERROR : INVALID COMMAND";
+                    }
+                }
                 if (request.contains("WHERE")) {
                     String[] tab = request.split("FROM");
                     String[] tab2 = tab[1].split("WHERE");
@@ -195,8 +255,15 @@ public class SQL {
                     } else {
                         if (tableaux.isEmpty())
                             return "NO DATA SELECTED";
-                        else
-                            return displayResult(tableaux);
+                        else {
+                            if (otherRequest == null) {
+                                return displayResult(tableaux);
+                            }
+                            writeToJson(tableaux);
+                            String r = otherRequest + " sousRequete " + suite;
+                            Table t = new Table(r);
+                            return displayResult(t.getDatasFetch());
+                        }
                     }
                 } else {
                     return "ERROR: YOU TRIED TO SELECT DATA IN A TABLE WHO DOESN'T EXIST";

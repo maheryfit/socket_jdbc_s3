@@ -7,6 +7,10 @@ BONUS : Traitement de plusieurs clients(Multithreading)
 
 Commande existant :
 
+__ creation de table : CREATE TABLE nom_table AND COLUMNS ARE nom_colonne, nom_colonne, ...
+
+__ insertion : INSERT INTO nom_table VALUES valeur, valeur, valeur, ...
+
 __ select : SELECT * FROM nom_table
 
 __ select avec colonne : SELECT colonnes FROM nom table
@@ -15,11 +19,7 @@ __ select avec condition : SELECT * FROM nom_table WHERE colonne = valeur [AND -
 
 __ select avec colonne et condition : SELECT colonnes FROM nom_table WHERE colonne = valeur [AND - OR [colonne] = [valeur]]
 
-__ insertion : INSERT INTO nom_table VALUES valeur, valeur, valeur, ...
-
 __ suppression avec condition : DELETE FROM nom_table  WHERE colonne = valeur
-
-__ creation de table : CREATE TABLE nom_table AND COLUMNS ARE nom_colonne, nom_colonne, ...
 
 __ union (valable avec ou sans condition) : SELECT * FROM nom_table UNION SELECT * FROM meme_nom_table
 
@@ -38,3 +38,5 @@ __ lister les tables presents : SHOW TABLES
 __ lister les noms de colonnes d'une table : DESC nom_table
 
 __ supprimer la table : DROP nom_table
+
+__ sous requete : SELECT ... FROM FETCH FROM SELECT ... FROM ... LIMIT ...
