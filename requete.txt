@@ -1,0 +1,55 @@
+CREATE TABLE Voiture AND COLUMNS ARE idVoiture, marque, origine
+
+CREATE TABLE Chauffeur AND COLUMNS ARE idChauffeur, nomChauffeur, idVoiture
+
+SHOW TABLES
+
+DESC Chauffeur
+
+INSERT INTO Voiture VALUES 1, Mercedes, USA
+
+INSERT INTO Voiture VALUES 2, Ford, USA
+
+INSERT INTO Voiture VALUES 3, Kia, Coree
+
+INSERT INTO Voiture VALUES 4, Toyota, Japon
+
+INSERT INTO Voiture VALUES 5, Bugatti, France
+
+INSERT INTO Voiture VALUES 6, Lamborghini, Italie
+
+INSERT INTO Voiture VALUES 7, Ferrari, Italie
+
+INSERT INTO Chauffeur VALUES 1,Marquez, 1
+
+INSERT INTO Chauffeur VALUES 2,Fabio, 1
+
+INSERT INTO Chauffeur VALUES 3,Zarco , 2
+
+INSERT INTO Chauffeur VALUES 4,Hamilton, 3
+
+INSERT INTO Chauffeur VALUES 5,Verstappen, 4
+
+INSERT INTO Chauffeur VALUES 6,Max, 4
+
+SELECT * FROM Voiture
+
+DELETE FROM Voiture WHERE idVoiture = 7
+
+SELECT idChauffeur, nomChauffeur FROM Chauffeur
+
+SELECT * FROM Chauffeur WHERE idChauffeur = 3 OR idChauffeur =4
+
+SELECT idVoiture, marque FROM FETCH FROM SELECT * FROM Voiture WHERE origine = USA
+
+SELECT idVoiture, marque FROM FETCH FROM SELECT * FROM Voiture WHERE origine = USA LIMIT WHERE idVoiture = 1
+
+SELECT * FROM Chauffeur NOT IN SELECT * FROM Chauffeur WHERE idChauffeur = 1
+
+SELECT * FROM Chauffeur INTERSECT SELECT * FROM Chauffeur WHERE idChauffeur = 1
+
+SELECT * FROM Chauffeur PRODUCT WITH SELECT * FROM Voiture
+
+SELECT * FROM Chauffeur JOIN SELECT * FROM Voiture ON idVoiture
+
+DROP Voiture

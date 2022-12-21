@@ -146,10 +146,11 @@ public class SQL {
     private LinkedList<String> getFileTable() throws Exception {
         String colStr = getFileTableTXT();
         String[] tables = colStr.split("&&");
+        LinkedList<String> aRetourner = new LinkedList<>();
         for (String table : tables) {
-            this.tableExistants.add(table.trim());
+            aRetourner.add(table.trim());
         }
-        return this.tableExistants;
+        return aRetourner;
     }
 
     private boolean isTableExist(String nom) throws Exception {
@@ -165,14 +166,8 @@ public class SQL {
                 String name = request.split("DROP")[1].trim();
                 return deleteTable(name);
             } else if (request.equals("SHOW TABLES")) {
-                int count = 0;
                 LinkedList<String> listes = getFileTable();
-                for (String string : listes) {
-                    if (string.equals("")) {
-                        count++;
-                    }
-                }
-                if (count == listes.size()) {
+                if (listes.isEmpty()) {
                     return "THERE IS NO TABLE";
                 }
                 return listes;
