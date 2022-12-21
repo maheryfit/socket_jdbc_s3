@@ -1,4 +1,5 @@
 Presenter par RAKOTOARISON Fitahiana Mahery, ETU 001821, Promotion 15 - A, W-73
+Langage : JAVA
 Le theme du projet SOCKET est Le S.G.B.D
 
 N.B: Les commandes telles que SELECT, FROM,... doivent etre en majuscules et que les noms de tables et les colonnes sont sensibles a la casse
