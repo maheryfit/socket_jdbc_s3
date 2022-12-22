@@ -42,13 +42,6 @@ public class Table {
         }
     }
 
-    private void traitementSousRequete(String request) throws Exception {
-        String[] reqs = request.split("(");
-        for (String req : reqs) {
-            System.out.println(req);
-        }
-    }
-
     private LinkedList<String> describeTable(String request) throws Exception {
         String nameTable = request.split("DESC")[1].trim();
         String string = getFileTableTXT(nameTable);

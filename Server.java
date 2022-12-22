@@ -89,7 +89,6 @@ public class Server implements Runnable {
                 System.out.println(e.getLocalizedMessage());
                 System.out.println(e.getCause());
             }
-            LinkedList<String> dataFetch = new LinkedList<>();
             boolean first = true;
             System.out.println("User's name : " + name);
             while (true) {
