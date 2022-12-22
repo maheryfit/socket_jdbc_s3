@@ -1,4 +1,4 @@
-Presenter par RAKOTOARISON Fitahiana Mahery, ETU 001821, Promotion 15 - A, W-73
+# Presenter par RAKOTOARISON Fitahiana Mahery, ETU 001821, Promotion 15 - A, W-73
 
 Le theme du projet SOCKET est Le S.G.B.D
 
@@ -42,7 +42,7 @@ __ supprimer la table : DROP nom_table
 
 __ sous requete : SELECT ... FROM FETCH FROM SELECT ... FROM ... LIMIT ...
 
-Tester requete :
+# Tester requete :
 
 __ compile Server: java principale.ServerMain 
 
